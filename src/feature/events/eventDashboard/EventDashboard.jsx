@@ -4,6 +4,7 @@ import { Grid } from 'semantic-ui-react';
 import EventList from '../eventList/EventList';
 import {createEvent, deleteEvent, updateEvent} from '../eventActions';
 import LoadingComponent from '../../../app/layout/LoadingComponent';
+import EventActivity from '../eventActivity/EventActivity';
 
 const mapState = (state) => ({
   events: state.events,
@@ -34,7 +35,7 @@ class EventDashboard extends Component {
                     <EventList events={events} deleteEvent={this.handleDeleteEvent} />
                 </Grid.Column>
                 <Grid.Column width={6}>
-                    <h2>Activity feed</h2>
+                    <EventActivity />
                 </Grid.Column>
             </Grid>        
         )

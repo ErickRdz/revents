@@ -4,7 +4,7 @@ import { Grid } from 'semantic-ui-react';
 import SettingsNav from './SettingsNav';
 import BasicPage from './BasicPage';
 import AboutPage from './AboutPage';
-import PhotosPage from './PhotosPage';
+import PhotosPage from './Photos/PhotosPage';
 import AccountPage from './AccountPage';
 import { Route, Redirect, Switch } from 'react-router-dom';
 import {updatePassword} from '../../auth/authActions';

@@ -7,12 +7,13 @@ import {geocodeByAddress, getLatLng} from 'react-places-autocomplete';
 import {composeValidators, combineValidators, isRequired, hasLengthGreaterThan} from 'revalidate';
 import { Segment, Form, Button, Grid, Header } from 'semantic-ui-react';
 import {createEvent, updateEvent} from '../eventActions';
-import cuid from 'cuid';
 import textInput from '../../../app/common/form/textInput';
 import textArea from '../../../app/common/form/textArea';
 import SelectInput from '../../../app/common/form/SelectInput';
 import DateInput from '../../../app/common/form/DateInput';
 import PlaceInput from '../../../app/common/form/PlaceInput';
+import { withFirestore } from 'react-redux-firebase';
+import { toastr } from 'react-redux-toastr';
 
 const mapState = (state, ownProps) => {
 
@@ -20,8 +21,8 @@ const mapState = (state, ownProps) => {
 
   let event = {};
 
-  if(eventId && state.events.length > 0){
-    event = state.events.filter(event => event.id === eventId)[0];
+  if(state.firestore.ordered.events && state.firestore.ordered.events.length > 0){
+    event = state.firestore.ordered.events.filter(event => event.id === eventId)[0] || {};
   }
 
   return {
@@ -60,34 +61,41 @@ class EventForm extends Component {
     state = {
       cityLatLng: {},
       venueLatLng: {}
-    }; //{...this.props.event};
+    }; 
 
-    /*componentDidMount(){
-        if(this.props.selectedEvent !== null){
-            this.setState({
-                ...this.props.selectedEvent
-            });
-        }
-    }*/
+    async componentDidMount(){
+      const {firestore, match, history} = this.props;
+      let event = await firestore.get(`events/${match.params.id}`);
+      if(!event.exists){
+          history.push('/events');
+          toastr.error('Sorry', 'Event not found');
+      }
+      else{
+        this.setState({
+          venueLatLng: event.data().venueLatLng
+        })
+      }
+    }
 
-    onFormSubmit = (values) => {
+    onFormSubmit = async values => {
 
         values.venueLatLng = this.state.venueLatLng;
 
-        if(this.props.initialValues.id){
-          this.props.updateEvent(values);
-          this.props.history.push(`/events/${this.props.initialValues.id}`);
-        }
-        else{
-          const newEvent = {
-            ...values,
-            id: cuid(),
-            hostPhotoURL: '/assets/user.png',
-            hostedBy: 'Bob'
+        try{
+          if(this.props.initialValues.id){
+            this.props.updateEvent(values);
+            this.props.history.push(`/events/${this.props.initialValues.id}`);
           }
-          this.props.createEvent(newEvent);
-          this.props.history.push(`/events/${newEvent.id}`);
+          else{
+            let createdEvent = await this.props.createEvent(values);
+            this.props.history.push(`/events/${createdEvent.id}`);
+          }
         }
+        catch(error){
+          console.log(error);
+        }
+
+        
     }
 
     handleCitySelect = selectedCity => {
@@ -191,4 +199,4 @@ class EventForm extends Component {
     }
 }
 
-export default connect(mapState, actions)(reduxForm({form: 'eventForm', validate})(EventForm));
+export default withFirestore(connect(mapState, actions)(reduxForm({form: 'eventForm', validate, enableReinitialize: true})(EventForm)));

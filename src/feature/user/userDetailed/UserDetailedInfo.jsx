@@ -21,8 +21,8 @@ const UserDetailedInfo = ({profile}) => {
                     profile.interests &&  profile.interests.length > 0 
                     ? 
                     
-                    profile.interests.map(interest => 
-                        <Item>
+                    profile.interests.map((interest, index) => 
+                        <Item key={index}>
                             <Icon name='heart'/>
                             <Item.Content>{interest}</Item.Content>
                         </Item>

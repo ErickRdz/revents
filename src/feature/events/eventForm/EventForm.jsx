@@ -6,14 +6,13 @@ import {reduxForm, Field} from 'redux-form';
 import {geocodeByAddress, getLatLng} from 'react-places-autocomplete';
 import {composeValidators, combineValidators, isRequired, hasLengthGreaterThan} from 'revalidate';
 import { Segment, Form, Button, Grid, Header } from 'semantic-ui-react';
-import {createEvent, updateEvent} from '../eventActions';
+import {createEvent, updateEvent, cancelToggle} from '../eventActions';
 import textInput from '../../../app/common/form/textInput';
 import textArea from '../../../app/common/form/textArea';
 import SelectInput from '../../../app/common/form/SelectInput';
 import DateInput from '../../../app/common/form/DateInput';
 import PlaceInput from '../../../app/common/form/PlaceInput';
 import { withFirestore } from 'react-redux-firebase';
-import { toastr } from 'react-redux-toastr';
 
 const mapState = (state, ownProps) => {
 
@@ -26,13 +25,15 @@ const mapState = (state, ownProps) => {
   }
 
   return {
-    initialValues: event
+    initialValues: event,
+    event
   };
 }
 
 const actions = {
   createEvent,
-  updateEvent
+  updateEvent,
+  cancelToggle
 };
 
 const validate = combineValidators({
@@ -64,17 +65,13 @@ class EventForm extends Component {
     }; 
 
     async componentDidMount(){
-      const {firestore, match, history} = this.props;
-      let event = await firestore.get(`events/${match.params.id}`);
-      if(!event.exists){
-          history.push('/events');
-          toastr.error('Sorry', 'Event not found');
-      }
-      else{
-        this.setState({
-          venueLatLng: event.data().venueLatLng
-        })
-      }
+      const {firestore, match} = this.props;
+      await firestore.setListener(`events/${match.params.id}`);
+    }
+
+    async componentWillUnmount(){
+      const {firestore, match} = this.props;
+      await firestore.unsetListener(`events/${match.params.id}`);
     }
 
     onFormSubmit = async values => {
@@ -83,6 +80,11 @@ class EventForm extends Component {
 
         try{
           if(this.props.initialValues.id){
+
+            if(Object.keys(values.venueLatLng).length === 0 ){
+              values.venueLatLng = this.props.event.venueLatLng
+            }
+
             this.props.updateEvent(values);
             this.props.history.push(`/events/${this.props.initialValues.id}`);
           }
@@ -123,25 +125,10 @@ class EventForm extends Component {
           this.props.change('venue', selectedVenue)
         })
     }
-    
-
-    /*handleInputChange = (evt) => {
-        this.setState({
-            [evt.target.name]: evt.target.value
-        })
-    }*/
-
-    /*handleInputChange = ({target: {name, value}}) => {
-        this.setState({
-            [name]: value
-        })
-    }*/
 
     render() {
 
-        // const {cancelFormOpen} = this.props; 
-        //const {title, date, city, venue, hostedBy} = this.state;
-        const {history, initialValues, invalid, submitting, pristine} = this.props;
+        const {history, initialValues, invalid, submitting, pristine, event, cancelToggle} = this.props;
 
         return (
 
@@ -190,6 +177,13 @@ class EventForm extends Component {
                         ? () => history.push(`/events/${initialValues.id}`) 
                         : () => history.push(`/events`)
                       } type="button">Cancel</Button>
+                      <Button 
+                        type='button' 
+                        color={event.cancelled ? 'green' : 'red'} 
+                        floated='right'
+                        content={event.cancelled ? 'Reactive event' : 'Cancel event'}
+                        onClick={() => cancelToggle(!event.cancelled, event.id)}
+                      />
                     </Form>
                   </Segment>
             </Grid.Column>

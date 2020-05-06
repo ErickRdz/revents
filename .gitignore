@@ -20,6 +20,8 @@
 .env.development.local
 .env.test.local
 .env.production.local
+/src/app/config/firebase.js
+/public/index.html
 
 npm-debug.log*
 yarn-debug.log*

@@ -10,6 +10,7 @@ import UserDetailedEvents from './UserDetailedEvents';
 import UserDetailedSidebar from './UserDetailedSidebar';
 import {userDetailedQuery} from '../userQueries';
 import LoadingComponent from '../../../app/layout/LoadingComponent';
+import {getUserEvents} from '../userActions';
 
 const mapState = (state, ownProps) => {
 
@@ -26,6 +27,8 @@ const mapState = (state, ownProps) => {
     return {
         profile,
         userId,
+        events: state.events,
+        eventsLoading: state.async.loading,
         auth: state.firebase.auth,
         photos: state.firestore.ordered.photos,
         requesting: state.firestore.status.requesting
@@ -33,11 +36,24 @@ const mapState = (state, ownProps) => {
     
 };
 
+const actions = {
+    getUserEvents
+}
+
 class UserDetailedPage extends Component {
+
+    async componentDidMount(){
+        let events = await this.props.getUserEvents(this.props.userId);
+        console.log(events);
+    }
+
+    changeTab = (e, data) => {
+        this.props.getUserEvents(this.props.userId, data.activeIndex);
+    }
 
     render() {
 
-        const {profile, photos, userId, auth, requesting} = this.props;
+        const {profile, photos, userId, auth, requesting, events, eventsLoading} = this.props;
         const isCurrentUser = userId === auth.uid;
         const loading = Object.values(requesting).some(a => a === true);
         if (loading) return <LoadingComponent />
@@ -71,7 +87,7 @@ class UserDetailedPage extends Component {
 
                 <Grid.Column width={12}>
                     <Segment attached>
-                        <UserDetailedEvents />
+                        <UserDetailedEvents events={events} eventsLoading={eventsLoading} changeTab={this.changeTab} />
                     </Segment>
                 </Grid.Column>
             </Grid>
@@ -81,6 +97,6 @@ class UserDetailedPage extends Component {
 }
 
 export default compose(
-    connect(mapState),
+    connect(mapState, actions),
     firestoreConnect((auth, userId) => userDetailedQuery(auth, userId))
  )(UserDetailedPage);

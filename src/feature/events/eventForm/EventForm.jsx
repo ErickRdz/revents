@@ -26,7 +26,8 @@ const mapState = (state, ownProps) => {
 
   return {
     initialValues: event,
-    event
+    event,
+    loading: state.async.loading
   };
 }
 
@@ -85,7 +86,7 @@ class EventForm extends Component {
               values.venueLatLng = this.props.event.venueLatLng
             }
 
-            this.props.updateEvent(values);
+            await this.props.updateEvent(values);
             this.props.history.push(`/events/${this.props.initialValues.id}`);
           }
           else{
@@ -128,7 +129,16 @@ class EventForm extends Component {
 
     render() {
 
-        const {history, initialValues, invalid, submitting, pristine, event, cancelToggle} = this.props;
+        const {
+            history, 
+            initialValues, 
+            invalid, 
+            submitting, 
+            pristine, 
+            event, 
+            cancelToggle,
+            loading
+        } = this.props;
 
         return (
 
@@ -169,14 +179,25 @@ class EventForm extends Component {
                         placeholder='Event Date' 
                       />
                       
-                      <Button disabled={invalid || submitting || pristine} positive type="submit">
+                      <Button 
+                        disabled={invalid || submitting || pristine} 
+                        loading={loading}
+                        positive 
+                        type="submit"
+                      >
                         Submit
                       </Button>
-                      <Button onClick={
-                        initialValues.id 
-                        ? () => history.push(`/events/${initialValues.id}`) 
-                        : () => history.push(`/events`)
-                      } type="button">Cancel</Button>
+                      <Button 
+                        onClick={
+                          initialValues.id 
+                          ? () => history.push(`/events/${initialValues.id}`) 
+                          : () => history.push(`/events`)
+                        } 
+                        type="button"
+                        disabled={loading}
+                      >
+                        Cancel
+                      </Button>
                       <Button 
                         type='button' 
                         color={event.cancelled ? 'green' : 'red'} 

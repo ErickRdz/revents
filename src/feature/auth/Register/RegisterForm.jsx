@@ -41,7 +41,7 @@ const RegisterForm = ({handleSubmit, registerUser, error, invalid, submitting}) 
             placeholder="Password"
           />
           {error && <Label basic color='red'>{error}</Label>}
-          <Button disabled={invalid || submitting} fluid size="large" color="teal">
+          <Button loading={submitting} disabled={invalid || submitting} fluid size="large" color="teal">
             Register
           </Button>
           <Divider horizontal>
